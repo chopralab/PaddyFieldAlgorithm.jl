@@ -1,4 +1,4 @@
-# Public Interface
+# Regression Solution
 
 ```@docs
 PaddyFieldAlgorithm.LinearSolution

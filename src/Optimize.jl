@@ -3,8 +3,6 @@ import StatsBase
 
 export optimize_function
 
-fitness_function(x, y) = sum( (x .- y).^2 )
-
 function find_neighbors(seeds::Vector{T}, r::Real; quantile = 0.75, quantile_step = 0.05) where T <: Solution
 
     # Calculate the distance between all seeds
@@ -70,10 +68,10 @@ function propagate(sf::T, seeds::Vector{U}, sown_idx::Vector{Int}, propagate_cou
     new_seeds
 end
 
-function optimize_function(sf::T, x::Vector{Float64}, y::Vector{Float64}; starting_seeds = 50, r = 0.7, yt = 10, Qmax = 50, iterations = 15) where T <: SolutionFactory
+function optimize_function(sf::T, fitness::Function; starting_seeds = 50, r = 0.7, yt = 10, Qmax = 50, iterations = 15) where T <: SolutionFactory
 
     seeds = [create_solution(sf) for _ in 1:starting_seeds]
-    s_fitness = [fitness(s, x, y) for s in seeds]
+    s_fitness = [fitness(s) for s in seeds]
 
     for _ in 1:iterations
         sown, sown_idx = sow_field(s_fitness; yt = yt, Qmax = Qmax)
@@ -86,9 +84,14 @@ function optimize_function(sf::T, x::Vector{Float64}, y::Vector{Float64}; starti
         seeds_to_propagate = Int.(round.(pollinate(neighbors, sown)))
 
         seeds = propagate(sf, seeds, sown_idx, seeds_to_propagate)
-        s_fitness = [fitness(seed, x, y) for seed in seeds]
+        s_fitness = [fitness(seed) for seed in seeds]
     end
 
     best_seed = findmax(s_fitness)
     seeds[best_seed[2]], best_seed[1]
+end
+
+function optimize_function(sf::T, x::Vector{U}, y::Vector{U}; args...) where {T <: SolutionFactory, U <: Real}
+    fitness_function(s) = fitness(s, x, y)
+    optimize_function(sf,fitness_function; args...)
 end

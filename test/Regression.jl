@@ -40,7 +40,7 @@ end
     trig_fact = TrigonometricSolutionFactory(2)
     fit, mse = optimize_function(trig_fact, xs, ys; iterations = 100)
 
-    @test fit.b_0.v ≈ 5.0 atol = 1e-4
+    @test fit.c_0.v ≈ 5.0 atol = 1e-4
     @test fit.cos_coef[1].v ≈ +2.0 atol = 1e-3
     @test fit.cos_coef[2].v ≈ +0.0 atol = 1e-3
     @test fit.sin_coef[1].v ≈ +0.0 atol = 1e-3

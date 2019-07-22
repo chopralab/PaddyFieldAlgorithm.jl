@@ -6,7 +6,16 @@ export LinearSolution,
        TrigonometricSolutionFactory,
        show
 
-"A `RegressionSolution` attempts to fit a function to a set of points."
+"""
+A `RegressionSolution` attempts to fit a function to a set of points where the
+fitness is defined by the Mean Squared Error between the predicted y and true y
+
+``fitness(x,y) = -\\sum_{i}^{length(x)}(f(x_i) - y_i)^2``
+
+Where **f** is the `Solution`, x is a one dimensional input space, and y is the
+output space. *Note* the negative sign in the equation above which is necessary
+as the goal of the *Paddy Field Algorithm* is to maximize fitness.
+"""
 abstract type RegressionSolution <: Solution end
 
 fitness(s::RegressionSolution, x, y) = -sum((s(x) .- y) .^ 2)
@@ -16,6 +25,9 @@ fitness(s::RegressionSolution, x, y) = -sum((s(x) .- y) .^ 2)
 
 It is a regressive `Solution` which fits the following function:
 ``y(x) = m*x + b``
+
+The distance between a `LinearSolution` and a second `LinearSolution` is
+``d(m_1,m_2,b_1,b_2) = (m_1 - m_2)^2 + (b_1 - b_2)^2``
 """
 struct LinearSolution <: RegressionSolution
     m :: ParameterValue
@@ -44,10 +56,12 @@ function propagate_solution(sf::LinearSolutionFactory, sl::LinearSolution)
 end
 
 """
-`PolynomialSolution` contains a variable number of coefficients.
+`PolynomialSolution` is a regressive `Solution` which fits the following function:
+``y(x) = \\sum_{i=0}^{Degree}c_i x^i``
 
-It is a regressive `Solution` which fits the following function:
-``y(x) = c0 * x^0 + c1 * x^1 + c2 * x^2 + c3 * x^3 + ... + cn * x^n``
+Degree is defined by the user to be a positive integer and the distance between
+a `PolynomialSolution` and a second `PolynomialSolution` is
+``d(c^1,c^2) = \\sum_{i=0}^{Degree}(c_i^1 - c_i^2)^2``
 """
 struct PolynomialSolution <: RegressionSolution
     coefficients :: Vector{ParameterValue}
@@ -71,27 +85,29 @@ function propagate_solution(sf::PolynomialSolutionFactory, sl::PolynomialSolutio
 end
 
 """
-`TrigonometricSolution` contains a variable number of coefficients.
+`TrigonometricSolution` is a regressive `Solution` which fits the following function:
+``y(x) = c_0 + \\sum_{j=1}^{Degree/2}(c_{2j} cos(2jπx) + c_{2j+1} sin(2jπx))``
 
-It is a regressive `Solution` which fits the following function:
-``y(x) = c0 * x^0 + c1 * x^1 + c2 * x^2 + c3 * x^3 + ... + cn * x^n``
+Degree is defined by the user to be a positive integer and the distance between
+a `TrigonometricSolution` and a second `TrigonometricSolution` is
+``d(c^1,c^2) = (c_0^2 - c_0^2)^2 + \\sum_{i=1}^{Degree}(c_i^1 - c_i^2)^2``
 """
 struct TrigonometricSolution <: RegressionSolution
-    b_0 :: ParameterValue
+    c_0 :: ParameterValue
     cos_coef :: Vector{ParameterValue}
     sin_coef :: Vector{ParameterValue}
 end
 
-(s::TrigonometricSolution)(x) = s.b_0.v .+
+(s::TrigonometricSolution)(x) = s.c_0.v .+
                                 sum([c.v .* cos.(k.*x.*2 .*pi) for (k,c) in enumerate(s.cos_coef)]) +
                                 sum([c.v .* sin.(k.*x.*2 .*pi) for (k,c) in enumerate(s.sin_coef)])
 
-distance(s1::TrigonometricSolution, s2::TrigonometricSolution) = (s1.b_0.v - s2.b_0.v)^2 +
+distance(s1::TrigonometricSolution, s2::TrigonometricSolution) = (s1.c_0.v - s2.c_0.v)^2 +
                                                                  sum((Real.(s1.cos_coef) .- Real.(s2.cos_coef)).^2) +
                                                                  sum((Real.(s1.sin_coef) .- Real.(s2.sin_coef)).^2)
 
 struct TrigonometricSolutionFactory <: SolutionFactory
-    b_0 :: Parameter
+    c_0 :: Parameter
     cos_coef :: Vector{Parameter}
     sin_coef :: Vector{Parameter}
     TrigonometricSolutionFactory(degree :: Int) = new(
@@ -103,7 +119,7 @@ end
 
 function create_solution(s::TrigonometricSolutionFactory)
     TrigonometricSolution(
-        init(s.b_0),
+        init(s.c_0),
         [init(c) for c in s.cos_coef],
         [init(s) for s in s.sin_coef],
     )
@@ -111,7 +127,7 @@ end
 
 function propagate_solution(sf::TrigonometricSolutionFactory, sl::TrigonometricSolution)
     TrigonometricSolution(
-        seed(sf.b_0, sl.b_0),
+        seed(sf.c_0, sl.c_0),
         [seed(sfc, slp) for (sfc, slp) in zip(sf.cos_coef, sl.cos_coef)],
         [seed(sfc, slp) for (sfc, slp) in zip(sf.sin_coef, sl.sin_coef)],
     )
