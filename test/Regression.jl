@@ -33,5 +33,18 @@ end
 @testset "Trigonometric fit" begin
     import Random
 
-    gramacy_lee(x) = (sin.(10 .* pi .* x) ./ (2 .* x)) + ((x .- 1) .^ 4)
+    xs = [i for i in -pi:0.01:pi]
+    ys = 5.0 .+ 2.0 .* cos.(xs .* pi .* 2) .- sin.(xs .* pi .* 2 .* 2)
+
+    Random.seed!(1)
+    trig_fact = TrigonometricSolutionFactory(2)
+    fit, mse = optimize_function(trig_fact, xs, ys; iterations = 100)
+
+    @test fit.b_0 ≈ 5.0 atol = 1e-4
+    @test fit.cos_coef[1] ≈ +2.0 atol = 1e-3
+    @test fit.cos_coef[2] ≈ +0.0 atol = 1e-3
+    @test fit.sin_coef[1] ≈ +0.0 atol = 1e-3
+    @test fit.sin_coef[2] ≈ -1.0 atol = 1e-3
+    @test mse < abs(1.0e-4)
+    # gramacy_lee(x) = (sin.(10 .* pi .* x) ./ (2 .* x)) + ((x .- 1) .^ 4)
 end

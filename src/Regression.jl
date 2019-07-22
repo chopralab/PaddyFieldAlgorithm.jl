@@ -7,6 +7,9 @@ export LinearSolutionFactory
 export PolynomialSolution
 export PolynomialSolutionFactory
 
+export TrigonometricSolution
+export TrigonometricSolutionFactory
+
 export distance
 export create_solution
 
@@ -120,8 +123,8 @@ struct TrigonometricSolution <: Solution
 end
 
 (s::TrigonometricSolution)(x) = s.b_0 .+
-                                sum([c .* cos.(k*x) for (c,k) in enumerate(s.cos_coef)]) +
-                                sum([c .* sin.(k*x) for (c,k) in enumerate(s.sin_coef)])
+                                sum([c .* cos.(k.*x.*2 .*pi) for (k,c) in enumerate(s.cos_coef)]) +
+                                sum([c .* sin.(k.*x.*2 .*pi) for (k,c) in enumerate(s.sin_coef)])
 
 fitness(s::TrigonometricSolution, x, y) = -sum((s(x) .- y) .^ 2)
 
