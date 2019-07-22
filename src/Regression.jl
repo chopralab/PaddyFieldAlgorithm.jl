@@ -4,6 +4,9 @@ export SolutionFactory
 export LinearSolution
 export LinearSolutionFactory
 
+export PolynomialSolution
+export PolynomialSolutionFactory
+
 export distance
 export create_solution
 
@@ -84,8 +87,6 @@ struct PolynomialSolutionFactory <: SolutionFactory
     PolynomialSolutionFactory(degree :: Int) = new(
         [DefaultParameter(Pair(-10,10)) for _ in 1:(degree+1)],
     )
-
-    PolynomialSolutionFactory()
 end
 
 function create_solution(s::PolynomialSolutionFactory)
