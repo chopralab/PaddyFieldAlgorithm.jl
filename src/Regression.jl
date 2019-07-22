@@ -1,32 +1,15 @@
-export Solution
-export SolutionFactory
+export LinearSolution,
+       LinearSolutionFactory,
+       PolynomialSolution,
+       PolynomialSolutionFactory,
+       TrigonometricSolution,
+       TrigonometricSolutionFactory,
+       show
 
-export LinearSolution
-export LinearSolutionFactory
+"A `RegressionSolution` attempts to fit a function to a set of points."
+abstract type RegressionSolution <: Solution end
 
-export PolynomialSolution
-export PolynomialSolutionFactory
-
-export TrigonometricSolution
-export TrigonometricSolutionFactory
-
-export distance
-export create_solution
-
-"A `Solution` is optimized by the Paddy algorithm to maximize fitness"
-abstract type Solution end
-
-"Calculates how fit a given solution is"
-fitness(s::Solution) = 0.0
-
-"Calculates the distance between `Solution` s1 and `Solution` s2."
-distance(s1::Solution, s2::Solution) = 0.0
-
-"A `SolutionFactory` initialize and mutates a `Solution` randomly."
-abstract type SolutionFactory end
-
-"initializes a random `Solution`."
-create_solution(s::SolutionFactory) = 0.0
+fitness(s::RegressionSolution, x, y) = -sum((s(x) .- y) .^ 2)
 
 """
 `LinearSolution` contains two variables, a slope(`m`) and an intercept(`b`).
@@ -34,22 +17,16 @@ create_solution(s::SolutionFactory) = 0.0
 It is a regressive `Solution` which fits the following function:
 ``y(x) = m*x + b``
 """
-struct LinearSolution <: Solution
-    m :: Real
-    b :: Real
-    m_gaussian :: Real
-    b_gaussian :: Real
+struct LinearSolution <: RegressionSolution
+    m :: ParameterValue
+    b :: ParameterValue
 end
 
-(s::LinearSolution)(x) = (s.m .* x .+ s.b)
+(s::LinearSolution)(x) = (s.m.v .* x .+ s.b.v)
 
-fitness(s::LinearSolution, x, y) = -sum((s(x) .- y) .^ 2)
+distance(s1::LinearSolution, s2::LinearSolution) = (s1.m.v - s2.m.v)^2 + (s1.b.v - s2.b.v)^2
 
-distance(s1::LinearSolution, s2::LinearSolution) = (s1.m - s2.m)^2 + (s1.b - s2.b)^2
-
-function show(io::IO, s::LinearSolution)
-    println(io, "y(x) = $(s.m)*m + $(s.b)")
-end
+Base.show(io::IO, s::LinearSolution) = print(io, "y(x) = $(s.m.v)*x + $(s.b.v)")
 
 struct LinearSolutionFactory <: SolutionFactory
     m::Parameter
@@ -60,12 +37,10 @@ struct LinearSolutionFactory <: SolutionFactory
     )
 end
 
-create_solution(s::LinearSolutionFactory) = LinearSolution(init(s.m), init(s.b), 0.0, 0.0)
+create_solution(s::LinearSolutionFactory) = LinearSolution(init(s.m), init(s.b))
 
 function propagate_solution(sf::LinearSolutionFactory, sl::LinearSolution)
-    m, m_g = seed(sf.m, sl.m, sl.m_gaussian)
-    b, b_g = seed(sf.b, sl.b, sl.b_gaussian)
-    LinearSolution(m, b, m_g, b_g)
+    LinearSolution(seed(sf.m, sl.m), seed(sf.b, sl.b))
 end
 
 """
@@ -74,16 +49,13 @@ end
 It is a regressive `Solution` which fits the following function:
 ``y(x) = c0 * x^0 + c1 * x^1 + c2 * x^2 + c3 * x^3 + ... + cn * x^n``
 """
-struct PolynomialSolution <: Solution
-    coefficients :: Vector{Real}
-    gaussians :: Vector{Real}
+struct PolynomialSolution <: RegressionSolution
+    coefficients :: Vector{ParameterValue}
 end
 
-(s::PolynomialSolution)(x) = sum([ c.*x.^(p-1) for (p, c) in pairs(IndexStyle(s.coefficients), s.coefficients)])
+(s::PolynomialSolution)(x) = sum([ c.v .* x.^(p-1) for (p, c) in enumerate(s.coefficients)])
 
-fitness(s::PolynomialSolution, x, y) = -sum((s(x) .- y) .^ 2)
-
-distance(s1::PolynomialSolution, s2::PolynomialSolution) = sum((s1.coefficients .- s2.coefficients).^2)
+distance(s1::PolynomialSolution, s2::PolynomialSolution) = sum((Real.(s1.coefficients) .- Real.(s2.coefficients)).^2)
 
 struct PolynomialSolutionFactory <: SolutionFactory
     coefficients::Vector{Parameter}
@@ -92,19 +64,10 @@ struct PolynomialSolutionFactory <: SolutionFactory
     )
 end
 
-function create_solution(s::PolynomialSolutionFactory)
-    PolynomialSolution([init(c) for c in s.coefficients], repeat([0.0], length(s.coefficients)))
-end
+create_solution(s::PolynomialSolutionFactory) = PolynomialSolution([init(c) for c in s.coefficients])
 
 function propagate_solution(sf::PolynomialSolutionFactory, sl::PolynomialSolution)
-    c = Vector{Real}()
-    g = Vector{Real}()
-    for (sfc, s1c, s1g) in zip(sf.coefficients, sl.coefficients, sl.gaussians)
-        c2, g2 = seed(sfc, s1c, s1g)
-        append!(c, [c2])
-        append!(g, [g2])
-    end
-    PolynomialSolution(c, g)
+    PolynomialSolution([seed(sfc, slp) for (sfc, slp) in zip(sf.coefficients, sl.coefficients)])
 end
 
 """
@@ -113,24 +76,19 @@ end
 It is a regressive `Solution` which fits the following function:
 ``y(x) = c0 * x^0 + c1 * x^1 + c2 * x^2 + c3 * x^3 + ... + cn * x^n``
 """
-struct TrigonometricSolution <: Solution
-    b_0 :: Real
-    cos_coef :: Vector{Real}
-    sin_coef :: Vector{Real}
-    gaussian_b :: Real
-    gaussian_c :: Vector{Real}
-    gaussian_s :: Vector{Real}
+struct TrigonometricSolution <: RegressionSolution
+    b_0 :: ParameterValue
+    cos_coef :: Vector{ParameterValue}
+    sin_coef :: Vector{ParameterValue}
 end
 
-(s::TrigonometricSolution)(x) = s.b_0 .+
-                                sum([c .* cos.(k.*x.*2 .*pi) for (k,c) in enumerate(s.cos_coef)]) +
-                                sum([c .* sin.(k.*x.*2 .*pi) for (k,c) in enumerate(s.sin_coef)])
+(s::TrigonometricSolution)(x) = s.b_0.v .+
+                                sum([c.v .* cos.(k.*x.*2 .*pi) for (k,c) in enumerate(s.cos_coef)]) +
+                                sum([c.v .* sin.(k.*x.*2 .*pi) for (k,c) in enumerate(s.sin_coef)])
 
-fitness(s::TrigonometricSolution, x, y) = -sum((s(x) .- y) .^ 2)
-
-distance(s1::TrigonometricSolution, s2::TrigonometricSolution) = (s1.b_0 - s2.b_0)^2 +
-                                                                 sum((s1.cos_coef .- s2.cos_coef).^2) +
-                                                                 sum((s1.sin_coef .- s2.sin_coef).^2)
+distance(s1::TrigonometricSolution, s2::TrigonometricSolution) = (s1.b_0.v - s2.b_0.v)^2 +
+                                                                 sum((Real.(s1.cos_coef) .- Real.(s2.cos_coef)).^2) +
+                                                                 sum((Real.(s1.sin_coef) .- Real.(s2.sin_coef)).^2)
 
 struct TrigonometricSolutionFactory <: SolutionFactory
     b_0 :: Parameter
@@ -148,27 +106,13 @@ function create_solution(s::TrigonometricSolutionFactory)
         init(s.b_0),
         [init(c) for c in s.cos_coef],
         [init(s) for s in s.sin_coef],
-        0.0,
-        repeat([0.0], length(s.cos_coef)),
-        repeat([0.0], length(s.sin_coef)),
     )
 end
 
 function propagate_solution(sf::TrigonometricSolutionFactory, sl::TrigonometricSolution)
-    b, bg = seed(sf.b_0, sl.b_0, sl.gaussian_b)
-    c = Vector{Real}()
-    s = Vector{Real}()
-    cg = Vector{Real}()
-    sg = Vector{Real}()
-    for (sfc, s1c, s1g) in zip(sf.cos_coef, sl.cos_coef, sl.gaussian_c)
-        c2, g2 = seed(sfc, s1c, s1g)
-        append!(c, [c2])
-        append!(cg, [g2])
-    end
-    for (sfc, s1c, s1g) in zip(sf.sin_coef, sl.sin_coef, sl.gaussian_s)
-        c2, g2 = seed(sfc, s1c, s1g)
-        append!(s, [c2])
-        append!(sg, [g2])
-    end
-    TrigonometricSolution(b, c, s, bg, cg, sg)
+    TrigonometricSolution(
+        seed(sf.b_0, sl.b_0),
+        [seed(sfc, slp) for (sfc, slp) in zip(sf.cos_coef, sl.cos_coef)],
+        [seed(sfc, slp) for (sfc, slp) in zip(sf.sin_coef, sl.sin_coef)],
+    )
 end

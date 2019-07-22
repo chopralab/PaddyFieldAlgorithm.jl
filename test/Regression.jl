@@ -6,10 +6,10 @@
 
     Random.seed!(1)
     linear_factory = LinearSolutionFactory()
-    fit, mse = optimize_function(linear_factory, xs, ys; iterations=200)
+    fit, mse = optimize_function(linear_factory, xs, ys; iterations=50)
 
-    @test fit.m ≈ 2.0 atol = 1e-4
-    @test fit.b ≈ 3.0 atol = 1e-4
+    @test fit.m.v ≈ 2.0 atol = 1e-4
+    @test fit.b.v ≈ 3.0 atol = 1e-4
     @test mse < abs(1.0e-4)
 end
 
@@ -21,12 +21,12 @@ end
 
     Random.seed!(20)
     poly_fact = PolynomialSolutionFactory(3)
-    fit, mse = optimize_function(poly_fact, xs, ys; iterations = 200)
+    fit, mse = optimize_function(poly_fact, xs, ys; iterations = 100)
 
-    @test fit.coefficients[1] ≈ +1.0 atol = 1e-4
-    @test fit.coefficients[2] ≈ +3.0 atol = 1e-4
-    @test fit.coefficients[3] ≈ -5.0 atol = 1e-4
-    @test fit.coefficients[4] ≈ +4.0 atol = 1e-4
+    @test fit.coefficients[1].v ≈ +1.0 atol = 1e-4
+    @test fit.coefficients[2].v ≈ +3.0 atol = 1e-4
+    @test fit.coefficients[3].v ≈ -5.0 atol = 1e-4
+    @test fit.coefficients[4].v ≈ +4.0 atol = 1e-4
     @test mse < abs(1.0e-4)
 end
 
@@ -40,11 +40,11 @@ end
     trig_fact = TrigonometricSolutionFactory(2)
     fit, mse = optimize_function(trig_fact, xs, ys; iterations = 100)
 
-    @test fit.b_0 ≈ 5.0 atol = 1e-4
-    @test fit.cos_coef[1] ≈ +2.0 atol = 1e-3
-    @test fit.cos_coef[2] ≈ +0.0 atol = 1e-3
-    @test fit.sin_coef[1] ≈ +0.0 atol = 1e-3
-    @test fit.sin_coef[2] ≈ -1.0 atol = 1e-3
+    @test fit.b_0.v ≈ 5.0 atol = 1e-4
+    @test fit.cos_coef[1].v ≈ +2.0 atol = 1e-3
+    @test fit.cos_coef[2].v ≈ +0.0 atol = 1e-3
+    @test fit.sin_coef[1].v ≈ +0.0 atol = 1e-3
+    @test fit.sin_coef[2].v ≈ -1.0 atol = 1e-3
     @test mse < abs(1.0e-4)
     # gramacy_lee(x) = (sin.(10 .* pi .* x) ./ (2 .* x)) + ((x .- 1) .^ 4)
 end
