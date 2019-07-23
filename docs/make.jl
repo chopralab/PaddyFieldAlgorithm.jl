@@ -5,6 +5,7 @@ makedocs(
     sitename = "PaddyFieldAlgorithm.jl",
     pages = Any[
         "Home" => "index.md",
+        "Parameter" => "parameter.md",
         "Solution" => "solution.md",
         "Regression" => "regression.md",
     ],

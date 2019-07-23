@@ -10,6 +10,7 @@ CurrentModule = PaddyFieldAlgorithm
 ```@contents
 Pages = [
     "regression.md",
+    "parameter.md",
     "solution.md",
 ]
 ```

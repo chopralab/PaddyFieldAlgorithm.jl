@@ -13,16 +13,18 @@ how the `Solution` is evaluated. The algorithm attempts to modify the
 abstract type Solution end
 
 """
+    distance(s1, s2) 
+
 Calculates the distance between `Solution` s1 and `Solution` s2
 
 The Paddy algorithm uses the *distance* between solutions to calculate the
 number of neighbors a given `Solution` has and scale the fitness value
 accordingly. See the `pollinate` function for details.
 """
-distance(s1::Solution, s2::Solution) = 0.0
+function distance end
 
 """
-A `SolutionFactory` initializes and propogates a `Solution`
+A `SolutionFactory` initializes and propagates a `Solution`
 
 Internally, a `SolutionFactory` consists of `Parameter` s which define rules on
 how to create and modify `ParameterValue` s in a given `Solution`.
@@ -32,7 +34,7 @@ abstract type SolutionFactory end
 """
     create_solution(sf)
 
-This function is used to generate a random `Solution`.
+This function is used to generate a random `Solution` using `SolutionFactory` sf
 
 # Examples
 ```julia-repl
@@ -41,7 +43,7 @@ julia> create_solution(sf)
 y(x) = 4.403384493734293*x + -86.10091661533485
 ```
 """
-create_solution(sf::SolutionFactory) = 0.0
+function create_solution end
 
 """
     propagate_solution(sf, sl)
@@ -57,4 +59,4 @@ julia> propagate_solution(sf, sl)
 y(x) = 8.649846062840627*x + 52.23236375794089
 ```
 """
-propagate_solution(sf::SolutionFactory, sl::Solution) = 0.0
+function propagate_solution end
