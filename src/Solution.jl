@@ -30,14 +30,31 @@ how to create and modify `ParameterValue` s in a given `Solution`.
 abstract type SolutionFactory end
 
 """
-Initializes a random `Solution`
+    create_solution(sf)
 
-This function is used to generate random `Solution` s so that they can be
-used to propogate new `Solution` s.
+This function is used to generate a random `Solution`.
+
+# Examples
+```julia-repl
+julia> sf = LinearSolutionFactory();
+julia> create_solution(sf)
+y(x) = 4.403384493734293*x + -86.10091661533485
+```
 """
-create_solution(s::SolutionFactory) = 0.0
+create_solution(sf::SolutionFactory) = 0.0
 
 """
-Randomly create a new `Solution` from an existing `Solution`
+    propagate_solution(sf, sl)
+
+Create a new `Solution` from an existing `Solution`. Typically, the new
+solution is generated randomly from the old solution.
+
+# Examples
+```julia-repl
+julia> sf = LinearSolutionFactory();
+julia> sl = create_solution(s);
+julia> propagate_solution(sf, sl)
+y(x) = 8.649846062840627*x + 52.23236375794089
+```
 """
 propagate_solution(sf::SolutionFactory, sl::Solution) = 0.0

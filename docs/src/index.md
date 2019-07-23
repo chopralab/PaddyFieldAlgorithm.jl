@@ -8,5 +8,8 @@ CurrentModule = PaddyFieldAlgorithm
 ## Contents
 
 ```@contents
-Pages = ["regression.md"]
+Pages = [
+    "regression.md",
+    "solution.md",
+]
 ```

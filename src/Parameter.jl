@@ -42,7 +42,7 @@ end
 
 norm(v::RangeNormalizedParameter, value::Real) = (value - v.limits.first) / (v.limits.second - v.limits.first)
 
-unnorm(v::RangeNormalizedParameter, value::Real) = value * (v.limits.second - v.limits.second) + v.limits.first
+unnorm(v::RangeNormalizedParameter, value::Real) = value * (v.limits.second - v.limits.first) + v.limits.first
 
 clamp(v::RangeNormalizedParameter, value::Real) = clamp(value, v.limits.first, v.limits.second)
 

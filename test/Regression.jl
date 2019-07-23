@@ -11,6 +11,30 @@
     @test fit.m.v ≈ 2.0 atol = 1e-4
     @test fit.b.v ≈ 3.0 atol = 1e-4
     @test mse < abs(1.0e-4)
+
+    linear_factory = LinearSolutionFactory(
+        RangeNormalizedParameter(Pair(-100, 100)),
+        RangeNormalizedParameter(Pair(-100, 100)),
+    )
+
+    fit, mse = optimize_function(linear_factory, xs, ys; iterations=50)
+
+    @test fit.m.v ≈ 2.0 atol = 1e-3
+    @test fit.b.v ≈ 3.0 atol = 1e-3
+    @test mse < abs(1.0e-4)
+
+    linear_factory = LinearSolutionFactory(
+        ZNormalizedParameter( Pair(-5, 5), 1, 4),
+        ZNormalizedParameter( Pair(-5, 5), 1, 4),
+    )
+
+    fit, mse = optimize_function(linear_factory, xs, ys; iterations=50)
+
+    @test fit.m.v ≈ 2.0 atol = 1e-3
+    @test fit.b.v ≈ 3.0 atol = 1e-3
+    @test mse < abs(1.0e-4)
+
+    repr(fit)
 end
 
 @testset "Polynomial fit" begin
@@ -28,6 +52,9 @@ end
     @test fit.coefficients[3].v ≈ -5.0 atol = 1e-4
     @test fit.coefficients[4].v ≈ +4.0 atol = 1e-4
     @test mse < abs(1.0e-4)
+
+    # Doesn't fail
+    repr(fit)
 end
 
 @testset "Trigonometric fit" begin
@@ -47,4 +74,6 @@ end
     @test fit.sin_coef[2].v ≈ -1.0 atol = 1e-3
     @test mse < abs(1.0e-4)
     # gramacy_lee(x) = (sin.(10 .* pi .* x) ./ (2 .* x)) + ((x .- 1) .^ 4)
+
+    repr(fit)
 end
