@@ -73,6 +73,9 @@ function optimize_function(sf::T, fitness::Function; starting_seeds = 50, r = 0.
     seeds = [create_solution(sf) for _ in 1:starting_seeds]
     s_fitness = [fitness(s) for s in seeds]
 
+    best_seed = findmax(s_fitness)
+    best_seed_params, best_fitness_val = seeds[best_seed[2]], best_seed[1]
+
     for _ in 1:iterations
         sown, sown_idx = sow_field(s_fitness; yt = yt, Qmax = Qmax)
 
@@ -85,10 +88,14 @@ function optimize_function(sf::T, fitness::Function; starting_seeds = 50, r = 0.
 
         seeds = propagate(sf, seeds, sown_idx, seeds_to_propagate)
         s_fitness = [fitness(seed) for seed in seeds]
+
+        best_seed = findmax(s_fitness)
+        if best_seed[1] > best_fitness_val
+            best_seed_params, best_fitness_val = seeds[best_seed[2]], best_seed[1]
+        end
     end
 
-    best_seed = findmax(s_fitness)
-    seeds[best_seed[2]], best_seed[1]
+    best_seed_params, best_fitness_val
 end
 
 function optimize_function(sf::T, x::Vector{U}, y::Vector{U}; args...) where {T <: SolutionFactory, U <: Real}
